@@ -20,31 +20,31 @@ OUTPUT_FORMATS = {
     "WAV": ".wav"
 }
 
-# Avoid a black console window popping up when calling ffmpeg/ffprobe after packaging as a --windowed exe
+# 避免打包成 --windowed 的 exe 后，调用 ffmpeg/ffprobe 时弹出黑色控制台窗口
 CREATE_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
 
-# Color definitions
+# 颜色定义
 COLOR_DEFAULT = "#f0f0f0"
 COLOR_SUCCESS = "#d4edda"
 COLOR_FAILURE = "#f8d7da"
 
-# Used to find and terminate any running ffmpeg process when the window is closed
+# 用于窗口关闭时能找到并终止正在运行的 ffmpeg 进程
 current_process = None
 current_output_path = None
 
-# The file currently selected but not yet converted
+# 当前已选中但还未开始转换的文件
 selected_file_path = None
 
 
 def get_app_dir():
-    """Return the folder containing the exe (or script), used as the default output folder."""
+    """返回 exe（或脚本）所在的文件夹，用作输出文件夹的默认值。"""
     if getattr(sys, "frozen", False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
 
 
 def set_dpi_awareness():
-    """Let the app handle high-DPI scaling itself, to avoid the UI being stretched/blurred by the system."""
+    """让程序自己处理高 DPI 缩放，避免界面被系统拉伸模糊。"""
     if sys.platform == "win32":
         try:
             ctypes.windll.shcore.SetProcessDpiAwareness(1)
@@ -56,7 +56,7 @@ def set_dpi_awareness():
 
 
 def flash_taskbar():
-    """Flash the taskbar icon when conversion completes, to notify the user (even if the window isn't focused)."""
+    """转换完成后闪烁任务栏图标，提醒用户（即使窗口没有聚焦）。"""
     if sys.platform != "win32":
         return
     try:
@@ -87,7 +87,7 @@ def flash_taskbar():
 
 
 def set_window_state_color(color):
-    """Change the background color of the main window and each section, used as a visual cue for success/failure."""
+    """把主窗口和各个区域的背景改成指定颜色，用来做完成/失败的视觉提示。"""
     root.configure(bg=color)
     for widget in (
         drop_area, percent_label, eta_label, status_label,
@@ -147,7 +147,7 @@ def convert_worker(path):
     if chosen_folder:
         output = os.path.join(chosen_folder, base_name)
     else:
-        # Default: place it in the same folder as the source file
+        # 默认：和源文件放在同一个文件夹
         output = os.path.join(os.path.dirname(path), base_name)
 
     current_output_path = output
@@ -252,9 +252,10 @@ def choose_file():
 
 def drop_file(event):
     if current_process is not None:
-        return
+        return "copy"
     path = event.data.strip("{}")
     set_selected_file(path)
+    return "copy"
 
 
 def set_selected_file(path):
@@ -304,8 +305,7 @@ def on_close():
             except Exception:
                 pass
 
-        # A file left behind after ffmpeg is force-killed is incomplete, so delete it
-        # right away to avoid wasting disk space or being used by mistake
+        # ffmpeg 被强制中断后留下的文件是不完整的，直接删掉避免占用磁盘/造成误用
         if current_output_path and os.path.exists(current_output_path):
             try:
                 os.remove(current_output_path)
@@ -319,7 +319,7 @@ set_dpi_awareness()
 
 root = TkinterDnD.Tk()
 root.title("Universal Media Converter")
-root.geometry("800x650")
+root.geometry("520x480")
 root.configure(bg=COLOR_DEFAULT)
 root.protocol("WM_DELETE_WINDOW", on_close)
 
